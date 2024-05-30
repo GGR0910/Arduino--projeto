@@ -1,6 +1,10 @@
 #include <LiquidCrystal_I2C.h>
 #include <DHT.h>
 
+//Configurações do HC-SR04 ultrassonico
+#define Echopin 10
+#define Trigpin 9
+
 //Configurações da tela
 #define adress 0x27
 #define columns 16
@@ -44,6 +48,10 @@ void setup()
   pinMode(RedLigthPin, OUTPUT);
   pinMode(BuzerPin, OUTPUT);
 
+  //Configurações do sensor ultrassonico 
+  pinMode(Trigpin, OUTPUT);
+  pinMode(Echopin, INPUT);
+
   //Inicialização de sensores
   dht.begin();
 
@@ -60,7 +68,6 @@ void loop()
 }
 
 void CheckGasSensor(){
-  Serial.println(analogRead(MQ2Pin));
   if(analogRead(MQ2Pin) > MaxGasAcceptedValue){
     digitalWrite(RedLigthPin, HIGH);
     digitalWrite(BuzerPin, HIGH);
@@ -84,7 +91,14 @@ void GetData(){
       break;
     case 3:
       //Altura
-       
+      digitalWrite(Trigpin, LOW);
+      delayMicroseconds(2);
+      digitalWrite(Trigpin, HIGH);
+      delayMicroseconds(10);
+      digitalWrite(Trigpin, LOW);
+
+      long durationInMicroseconds = pulseIn(Echopin, HIGH);
+      long distanceInCM = 200 - (durationInMicroseconds / 29 / 2);
       break;
   }
 }
@@ -127,4 +141,5 @@ void ConfigureLeds(){
 void ShowData(){
   GetData();
 }
+
 
