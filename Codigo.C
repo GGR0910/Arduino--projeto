@@ -13,35 +13,66 @@ LiquidCrystal_I2C lcd(adress, columns, lines);
 DHT dht(DHTPIN, DHTTYPE);
 
 //Configuração do botão
-#define botao 6
+#define buttonPin 6
+
+//Configuração do sensor de gás e componentes
+#define MQ2Pin A0
+#define BuzerPin 8
+#define RedLigthPin 5
+#define MaxGasAcceptedValue 300
+
+//LedsDeModo
+#define TimeLed 2
+#define TempNWaterLed 3
+#define HeigthLed 4
 
 //Variaveis globais
-int Modo = 1;
+int Mode = 1;
 
 void setup()
 {
   Serial.begin(9600);
-  pinMode (2, OUTPUT);
-  pinMode (3, OUTPUT);
-  pinMode (4, OUTPUT);
-  pinMode (5, OUTPUT);
-  pinMode (8, OUTPUT);
-  pinMode (botao, INPUT);
-  ConfigurarLeds();
-  MostrarDados();
+  
+  //Configurações de modo
+  pinMode(TimeLed, OUTPUT);
+  pinMode(TempNWaterLed, OUTPUT);
+  pinMode(HeigthLed, OUTPUT);
+  pinMode(buttonPin, INPUT);
+
+ //Configurações do sensor de gás
+  pinMode(MQ2Pin,INPUT);
+  pinMode(RedLigthPin, OUTPUT);
+  pinMode(BuzerPin, OUTPUT);
+
+  //Inicialização de sensores
   dht.begin();
+
+  //Configuração do modo padrão
+  ConfigureLeds();
+  ShowData();
+
 }
 
 void loop()
 {
-  ChecaBotao();
+  CheckButton();
+  CheckGasSensor();
 }
 
-void PegarDados(){
+void CheckGasSensor(){
+  Serial.println(analogRead(MQ2Pin));
+  if(analogRead(MQ2Pin) > MaxGasAcceptedValue){
+    digitalWrite(RedLigthPin, HIGH);
+    digitalWrite(BuzerPin, HIGH);
+  }
+  else{
+    digitalWrite(RedLigthPin, LOW);
+    digitalWrite(BuzerPin, LOW);
+  }
+}
 
-  int sensor;
-  int valorCalculado;
-  switch (Modo)
+void GetData(){
+  switch (Mode)
   {
     case 1:
     //horario
@@ -58,43 +89,42 @@ void PegarDados(){
   }
 }
 
-void ChecaBotao(){
-  if (digitalRead(botao) == HIGH){
-    Serial.println(Modo);
-    Modo = Modo + 1;
-    ConfigurarLeds();
-    delay(1200);
+void CheckButton(){
+  if (digitalRead(buttonPin) == HIGH){
+    Mode = Mode + 1;
+    ConfigureLeds();
+    delay(1000);
   }
-  MostrarDados();
+  ShowData();
 }
 
-void ApagarLeds(){
-  digitalWrite (2, LOW);
-  digitalWrite (3, LOW);
-  digitalWrite (4, LOW);
+void TurnLedsOff(){
+  digitalWrite (HeigthLed, LOW);
+  digitalWrite (TempNWaterLed, LOW);
+  digitalWrite (TimeLed, LOW);
 }
 
-void ConfigurarLeds(){
-  ApagarLeds();
-  switch (Modo)
+void ConfigureLeds(){
+  TurnLedsOff();
+  switch (Mode)
   {
     case 1:
-      digitalWrite (2, HIGH);
+      digitalWrite (TimeLed, HIGH);
       break;
     case 2:
-      digitalWrite (3, HIGH);
+      digitalWrite (TempNWaterLed, HIGH);
       break;
     case 3:
-      digitalWrite (4, HIGH);
+      digitalWrite (HeigthLed, HIGH);
       break;
     default:
       digitalWrite (2, HIGH);
-      Modo = 1;
+      Mode = 1;
       break;
   }
 }
 
-void MostrarDados(){
-  PegarDados();
+void ShowData(){
+  GetData();
 }
 
