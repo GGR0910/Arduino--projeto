@@ -54,43 +54,72 @@ void setup()
 
   //Inicialização de sensores
   dht.begin();
+  
+  //Inicialização display lcd i2c
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(0, 0);
+  lcd.print("Bem vindo!");
+  delay(2000);
+  lcd.clear();
 
   //Configuração do modo padrão
   ConfigureLeds();
-  ShowData();
+  GetData();
 
-}
+} 
 
 void loop()
 {
-  CheckButton();
   CheckGasSensor();
+  CheckButton();
+  GetData();
+  Serial.println(Mode);
 }
 
 void CheckGasSensor(){
   if(analogRead(MQ2Pin) > MaxGasAcceptedValue){
+    lcd.clear();
     digitalWrite(RedLigthPin, HIGH);
     digitalWrite(BuzerPin, HIGH);
+    lcd.setCursor(0,0);
+    lcd.print("Alerta de");
+    lcd.setCursor(0,1);
+    lcd.print("gas/fumaca!");
+    delay(5000);
   }
   else{
+    lcd.clear();
     digitalWrite(RedLigthPin, LOW);
     digitalWrite(BuzerPin, LOW);
   }
 }
 
 void GetData(){
-  switch (Mode)
-  {
-    case 1:
-    //horario
-      break;
-    case 2:
+
+  if(Mode == 1){
+    //Horario
+  }
+  if(Mode == 2){
     //Temperatura e umidade
-      float t = dht.readTemperature();
-      float h = dht.readHumidity();
-      break;
-    case 3:
-      //Altura
+    float t = dht.readTemperature();
+    float h = dht.readHumidity();
+
+    lcd.setCursor(0,0);
+    lcd.print("Temp:");
+    lcd.setCursor(6,0);
+    lcd.print(t);
+    lcd.setCursor(12,0);
+    lcd.print("C");
+
+    lcd.setCursor(0,1);
+    lcd.print("Umid:");
+    lcd.setCursor(6, 1);
+    lcd.print(h);
+  }
+  if(Mode == 3){
+    //Altura
+      lcd.clear();
       digitalWrite(Trigpin, LOW);
       delayMicroseconds(2);
       digitalWrite(Trigpin, HIGH);
@@ -99,7 +128,18 @@ void GetData(){
 
       long durationInMicroseconds = pulseIn(Echopin, HIGH);
       long distanceInCM = 200 - (durationInMicroseconds / 29 / 2);
-      break;
+
+      lcd.setCursor(1,0);
+      lcd.print("Altura:");
+      lcd.setCursor(1, 1);
+      if(distanceInCM < 200 && distanceInCM > 0){
+        lcd.print(distanceInCM);
+        lcd.setCursor(4,1);
+        lcd.print("cm");
+      }
+      else{
+        lcd.print("Error");
+      }   
   }
 }
 
@@ -108,8 +148,8 @@ void CheckButton(){
     Mode = Mode + 1;
     ConfigureLeds();
     delay(1000);
+    lcd.clear();
   }
-  ShowData();
 }
 
 void TurnLedsOff(){
@@ -138,8 +178,5 @@ void ConfigureLeds(){
   }
 }
 
-void ShowData(){
-  GetData();
-}
 
 
