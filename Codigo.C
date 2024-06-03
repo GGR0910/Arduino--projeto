@@ -32,6 +32,9 @@ DHT dht(DHTPIN, DHTTYPE);
 
 //Variaveis globais
 int Mode = 1;
+float Old_T = 0;
+float Old_H = 0;
+bool GasAlarmActivated;
 
 void setup()
 {
@@ -74,14 +77,15 @@ void loop()
   CheckGasSensor();
   CheckButton();
   GetData();
-  Serial.println(Mode);
 }
 
 void CheckGasSensor(){
   if(analogRead(MQ2Pin) > MaxGasAcceptedValue){
-    lcd.clear();
     digitalWrite(RedLigthPin, HIGH);
     digitalWrite(BuzerPin, HIGH);
+    GasAlarmActivated = true;
+
+    lcd.clear();
     lcd.setCursor(0,0);
     lcd.print("Alerta de");
     lcd.setCursor(0,1);
@@ -89,7 +93,10 @@ void CheckGasSensor(){
     delay(5000);
   }
   else{
-    lcd.clear();
+    if(GasAlarmActivated){ 
+      lcd.clear();
+      GasAlarmActivated = false;  
+    }
     digitalWrite(RedLigthPin, LOW);
     digitalWrite(BuzerPin, LOW);
   }
@@ -104,14 +111,13 @@ void GetData(){
     //Temperatura e umidade
     float t = dht.readTemperature();
     float h = dht.readHumidity();
-
+    
     lcd.setCursor(0,0);
     lcd.print("Temp:");
     lcd.setCursor(6,0);
     lcd.print(t);
     lcd.setCursor(12,0);
     lcd.print("C");
-
     lcd.setCursor(0,1);
     lcd.print("Umid:");
     lcd.setCursor(6, 1);
@@ -119,7 +125,7 @@ void GetData(){
   }
   if(Mode == 3){
     //Altura
-      lcd.clear();
+      delay(250);
       digitalWrite(Trigpin, LOW);
       delayMicroseconds(2);
       digitalWrite(Trigpin, HIGH);
@@ -139,7 +145,8 @@ void GetData(){
       }
       else{
         lcd.print("Error");
-      }   
+      }
+       
   }
 }
 
