@@ -26,19 +26,20 @@ DHT dht(DHTPIN, DHTTYPE);
 #define MaxGasAcceptedValue 300
 
 //LedsDeModo
-#define TimeLed 2
 #define TempNWaterLed 3
 #define HeigthLed 4
 
 //Variaveis globais
 int Mode = 1;
+float Old_T = 0;
+float Old_H = 0;
+bool GasAlarmActivated;
 
 void setup()
 {
   Serial.begin(9600);
   
   //Configurações de modo
-  pinMode(TimeLed, OUTPUT);
   pinMode(TempNWaterLed, OUTPUT);
   pinMode(HeigthLed, OUTPUT);
   pinMode(buttonPin, INPUT);
@@ -74,14 +75,15 @@ void loop()
   CheckGasSensor();
   CheckButton();
   GetData();
-  Serial.println(Mode);
 }
 
 void CheckGasSensor(){
   if(analogRead(MQ2Pin) > MaxGasAcceptedValue){
-    lcd.clear();
     digitalWrite(RedLigthPin, HIGH);
     digitalWrite(BuzerPin, HIGH);
+    GasAlarmActivated = true;
+
+    lcd.clear();
     lcd.setCursor(0,0);
     lcd.print("Alerta de");
     lcd.setCursor(0,1);
@@ -89,7 +91,10 @@ void CheckGasSensor(){
     delay(5000);
   }
   else{
-    lcd.clear();
+    if(GasAlarmActivated){ 
+      lcd.clear();
+      GasAlarmActivated = false;  
+    }
     digitalWrite(RedLigthPin, LOW);
     digitalWrite(BuzerPin, LOW);
   }
@@ -98,28 +103,24 @@ void CheckGasSensor(){
 void GetData(){
 
   if(Mode == 1){
-    //Horario
-  }
-  if(Mode == 2){
     //Temperatura e umidade
     float t = dht.readTemperature();
     float h = dht.readHumidity();
-
+    
     lcd.setCursor(0,0);
     lcd.print("Temp:");
     lcd.setCursor(6,0);
     lcd.print(t);
     lcd.setCursor(12,0);
     lcd.print("C");
-
     lcd.setCursor(0,1);
     lcd.print("Umid:");
     lcd.setCursor(6, 1);
     lcd.print(h);
   }
-  if(Mode == 3){
+  if(Mode == 2){
     //Altura
-      lcd.clear();
+      delay(250);
       digitalWrite(Trigpin, LOW);
       delayMicroseconds(2);
       digitalWrite(Trigpin, HIGH);
@@ -139,7 +140,8 @@ void GetData(){
       }
       else{
         lcd.print("Error");
-      }   
+      }
+       
   }
 }
 
@@ -155,7 +157,6 @@ void CheckButton(){
 void TurnLedsOff(){
   digitalWrite (HeigthLed, LOW);
   digitalWrite (TempNWaterLed, LOW);
-  digitalWrite (TimeLed, LOW);
 }
 
 void ConfigureLeds(){
@@ -163,16 +164,13 @@ void ConfigureLeds(){
   switch (Mode)
   {
     case 1:
-      digitalWrite (TimeLed, HIGH);
-      break;
-    case 2:
       digitalWrite (TempNWaterLed, HIGH);
       break;
-    case 3:
+    case 2:
       digitalWrite (HeigthLed, HIGH);
       break;
     default:
-      digitalWrite (2, HIGH);
+      digitalWrite (TempNWaterLed, HIGH);
       Mode = 1;
       break;
   }
