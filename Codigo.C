@@ -148,8 +148,8 @@ void GetData(){
 void CheckButton(){
   if (digitalRead(buttonPin) == HIGH){
     Mode = Mode + 1;
+    delay(500);
     ConfigureLeds();
-    delay(1000);
     lcd.clear();
   }
 }
